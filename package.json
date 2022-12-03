@@ -1,0 +1,28 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "lint": "prettier --write **.sol",
+    "test": "forge test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ameesha1205/contracts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ameesha1205/contracts/issues"
+  },
+  "homepage": "https://github.com/ameesha1205/contracts#readme",
+  "dependencies": {
+    "prettier": "^2.8.0",
+    "prettier-plugin-solidity": "^1.0.0"
+  }
+}
