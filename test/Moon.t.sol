@@ -26,9 +26,22 @@ contract MoonTesting is Test {
         token.mint( 0x86791C7b7Ea5F77b1612eCc300dD44ba3A1C9083, amount);
         token.approve(address(moon), amount);
         moon.deposit(amount);
+        moon.balances(0x86791C7b7Ea5F77b1612eCc300dD44ba3A1C9083);
+        console.log("balance", moon.balances(0x86791C7b7Ea5F77b1612eCc300dD44ba3A1C9083));
         vm.stopPrank();
         // counter.increment();
         // assertEq(counter.number(), 1);
+    }
+
+    function testSyncDeposit() public {
+        bytes32 OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
+
+        vm.startPrank(0x86791C7b7Ea5F77b1612eCc300dD44ba3A1C9083);
+        bytes memory data = abi.encode(0x86791C7b7Ea5F77b1612eCc300dD44ba3A1C9083, 50000000);
+        bytes memory payload = abi.encode(OP_SYNC_DEPOSIT, data);
+        moon.mockInBound(payload);
+        console.log("balance", moon.balances(0x86791C7b7Ea5F77b1612eCc300dD44ba3A1C9083));
+        vm.stopPrank();
     }
 
     // function testSetNumber(uint256 x) public {

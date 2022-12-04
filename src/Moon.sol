@@ -5,8 +5,6 @@ import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./utils/PlugBase.sol";
 import "./Token.sol";
-import "forge-std/console.sol";
-
 struct Prize {
     uint256 id;
     uint256 amount;
@@ -32,6 +30,7 @@ contract Moon is PlugBase {
     bytes32 OP_DEPOSIT_LIQUIDTY = keccak256("OP_DEPOSIT_LIQUIDTY");
     bytes32 OP_WITHDRAW_LIQUIDTY = keccak256("OP_WITHDRAW_LIQUIDTY");
     bytes32 HUB_DEPOSIT = keccak256("HUB_DEPOSIT");
+    bytes32 OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
 
     uint256 CREATE_PRIZES_GAS_LIMIT = 100000;
     uint256 APPROVED_CLAIM_GAS_LIMIT = 100000;
@@ -42,6 +41,7 @@ contract Moon is PlugBase {
     event FundsDeposited(address indexed sender, uint256 amount);
     event FundsAdded(uint256 amount);
     event FundsRemoved(uint256 amount);
+    event SyncBalance(address indexed sender, uint256 balance);
 
     constructor(Token _token, address _hub, uint256 _hubChainSlug, uint256 _chainSlug, address _socket) PlugBase(_socket) {
         token = _token;
@@ -80,7 +80,6 @@ contract Moon is PlugBase {
 
     function deposit (uint256 _amount) external {
         token.transferFrom(msg.sender, address(this), _amount);
-        console.log("deposit", _amount);
         balances[msg.sender] += _amount;
         bytes memory _payload = abi.encode( msg.sender, _amount, chainSlug );
         bytes memory payload = abi.encode(HUB_DEPOSIT,_payload );
@@ -120,6 +119,12 @@ contract Moon is PlugBase {
         emit FundsRemoved(amount);
     }
 
+    function _syncDeposit(bytes memory payload) internal {
+        (address sender, uint256 balance) = abi.decode(payload, (address, uint256));
+        balances[sender] = balance;
+        emit SyncBalance(sender, balance);
+    }
+
      function _receiveInbound(bytes memory payload_) internal override {
         (bytes32 action, bytes memory data) = abi.decode(payload_, (bytes32, bytes));
         // if(action == OP_CREATE_PRIZES) _createPrize(data);
@@ -127,5 +132,15 @@ contract Moon is PlugBase {
         if(action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
         // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
         if(action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
+        if(action == OP_SYNC_DEPOSIT) _syncDeposit(data);
+     }
+    function mockInBound(bytes memory payload_) external {
+        (bytes32 action, bytes memory data) = abi.decode(payload_, (bytes32, bytes));
+        // if(action == OP_CREATE_PRIZES) _createPrize(data);
+        // if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
+        if(action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
+        // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
+        if(action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
+        if(action == OP_SYNC_DEPOSIT) _syncDeposit(data);
      }
 }
