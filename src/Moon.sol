@@ -24,7 +24,6 @@ contract Moon is PlugBase {
 
     mapping(address => uint256) public balances;
     mapping(uint256 => Prize) public prizes;
-    address[] users;
     mapping(uint256 => mapping(address => bool)) public claimed;
 
     uint256 public latestId;
@@ -112,11 +111,6 @@ contract Moon is PlugBase {
         ) = abi.decode(payload, (uint256, uint256, uint256, address, uint256));
         prizes[id] = Prize(id, amount, winnerAmount, receiver, expiry);
         latestId = id;
-
-        // reset claimed
-        for (uint256 i = 0; i < users.length; i++) {
-            claimed[id][users[i]] = false;
-        }
     }
 
     function getPrizeMoneyAmount() public view returns (uint256) {
@@ -126,7 +120,6 @@ contract Moon is PlugBase {
         uint256 expiry = prizes[latestId].expiry;
         address winnerAddress = prizes[latestId].winnerAddress;
         if (expiry < block.timestamp) return 0;
-        if (winnerAddress == address(0)) return 0;
         if (claimed[latestId][msg.sender]) return 0;
         if (winnerAddress == msg.sender) return winnerAmount;
         return amount;
@@ -148,7 +141,6 @@ contract Moon is PlugBase {
         token.mint(address(this), amount);
         token.transfer(receiver, amount);
         claimed[id][msg.sender] = true;
-        users.push(msg.sender);
         emit ClaimedEvent(id, receiver, amount);
     }
 

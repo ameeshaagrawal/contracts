@@ -65,7 +65,7 @@ contract HubTesting is Test {
         vm.startPrank(user1);
         uint256 amount = 1000;
         bytes memory payload = abi.encode(user1, amount, moons[0]);
-        payload = abi.encode(keccak256("OP_HUB_DEPOSIT"), payload);
+        payload = abi.encode(keccak256("HUB_DEPOSIT"), payload);
         hub.mockInbound(payload);
 
         assertEq(token.balanceOf(address(yieldFarm)), amount);
@@ -80,7 +80,7 @@ contract HubTesting is Test {
             // deposit
             vm.startPrank(users[index]);
             bytes memory payload = abi.encode(users[index], deposit, moons[0]);
-            payload = abi.encode(keccak256("OP_HUB_DEPOSIT"), payload);
+            payload = abi.encode(keccak256("HUB_DEPOSIT"), payload);
             hub.mockInbound(payload);
             vm.stopPrank();
         }

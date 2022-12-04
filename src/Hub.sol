@@ -20,9 +20,9 @@ contract Hub is PlugBase {
     mapping(address => uint256) public balances;
     mapping(uint256 => uint256) public moonBalances;
 
-    bytes32 OP_HUB_DEPOSIT = keccak256("OP_HUB_DEPOSIT");
+    bytes32 HUB_DEPOSIT = keccak256("HUB_DEPOSIT");
     bytes32 OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
-    bytes32 OP_HUB_DECLARE_PRIZE = keccak256("OP_CREATE_PRIZES");
+    bytes32 OP_CREATE_PRIZES = keccak256("OP_CREATE_PRIZES");
     bytes32 HUB_REQUEST_CLAIM = keccak256("HUB_REQUEST_CLAIM");
     bytes32 OP_APPROVED_CLAIM = keccak256("OP_APPROVED_CLAIM");
     string INTEGRATION_TYPE = "FAST";
@@ -89,6 +89,7 @@ contract Hub is PlugBase {
     }
 
     function declareWinner() external  {
+        if(prizes.length > 0)require(block.timestamp > prizes[prizes.length - 1].expiry, "Prize already active");
         uint256 interest = yieldFarm.maxWithdraw(address(this)) - totalDeposits;
         uint256 totalUsers = users.length;
 
@@ -119,13 +120,8 @@ contract Hub is PlugBase {
             prize.id
         );
 
-        payload = abi.encode(OP_HUB_DECLARE_PRIZE, payload);
+        payload = abi.encode(OP_CREATE_PRIZES, payload);
         _broadcast(type(uint256).max, SYNC_WINNER_GAS_LIMIT, payload);
-        
-        // reset claimed
-        for (uint256 i = 0; i < users.length; i++) {
-            claimed[prize.id][users[i]] = false;
-        }
     }
 
     function _receiveInbound(bytes memory payload_) internal override {
@@ -134,7 +130,7 @@ contract Hub is PlugBase {
             (bytes32, bytes)
         );
 
-        if (action == OP_HUB_DEPOSIT) _deposit(data);
+        if (action == HUB_DEPOSIT) _deposit(data);
         if (action == HUB_REQUEST_CLAIM) _processClaim(data);
     }
 
