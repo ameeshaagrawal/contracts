@@ -12,6 +12,7 @@ struct Prize {
     address winnerAddress;
     uint256 expiry;
 }
+
 contract Moon is PlugBase {
     using SafeERC20 for Token;
     Token public token;
@@ -50,7 +51,13 @@ contract Moon is PlugBase {
     event ClaimRequestSubmited(uint256 indexed id, uint256 receiver);
     event ClaimedEvent(uint256 indexed id, address receiver, uint256 amount);
 
-    constructor(Token _token, address _hub, uint256 _hubChainSlug, uint256 _chainSlug, address _socket) PlugBase(_socket) {
+    constructor(
+        Token _token,
+        address _hub,
+        uint256 _hubChainSlug,
+        uint256 _chainSlug,
+        address _socket
+    ) PlugBase(_socket) {
         token = _token;
         hub = _hub;
         hubChainSlug = _hubChainSlug;
@@ -105,6 +112,7 @@ contract Moon is PlugBase {
         ) = abi.decode(payload, (uint256, uint256, uint256, address, uint256));
         prizes[id] = Prize(id, amount, winnerAmount, receiver, expiry);
         latestId = id;
+
         // reset claimed
         for (uint256 i = 0; i < users.length; i++) {
             claimed[id][users[i]] = false;
@@ -162,27 +170,37 @@ contract Moon is PlugBase {
     }
 
     function _syncDeposit(bytes memory payload) internal {
-        (address sender, uint256 balance) = abi.decode(payload, (address, uint256));
+        (address sender, uint256 balance) = abi.decode(
+            payload,
+            (address, uint256)
+        );
         balances[sender] = balance;
         emit SyncBalance(sender, balance);
     }
 
-     function _receiveInbound(bytes memory payload_) internal override {
-        (bytes32 action, bytes memory data) = abi.decode(payload_, (bytes32, bytes));
+    function _receiveInbound(bytes memory payload_) internal override {
+        (bytes32 action, bytes memory data) = abi.decode(
+            payload_,
+            (bytes32, bytes)
+        );
         // if(action == OP_CREATE_PRIZES) _createPrize(data);
         // if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
-        if(action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
+        if (action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
         // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
-        if(action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
-        if(action == OP_SYNC_DEPOSIT) _syncDeposit(data);
-     }
+        if (action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
+        if (action == OP_SYNC_DEPOSIT) _syncDeposit(data);
+    }
+
     function mockInBound(bytes memory payload_) external {
-        (bytes32 action, bytes memory data) = abi.decode(payload_, (bytes32, bytes));
+        (bytes32 action, bytes memory data) = abi.decode(
+            payload_,
+            (bytes32, bytes)
+        );
         // if(action == OP_CREATE_PRIZES) _createPrize(data);
         // if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
-        if(action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
+        if (action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
         // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
-        if(action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
-        if(action == OP_SYNC_DEPOSIT) _syncDeposit(data);
-     }
+        if (action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
+        if (action == OP_SYNC_DEPOSIT) _syncDeposit(data);
+    }
 }

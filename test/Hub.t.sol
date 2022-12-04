@@ -87,16 +87,18 @@ contract HubTesting is Test {
 
         hub.declareWinner();
 
-        (uint256 id,
+        (
+            uint256 id,
             uint256 amount,
             uint256 winnerAmount,
             address winnerAddress,
-            uint256 expiry) = hub.getPrizes(0);
+            uint256 expiry
+        ) = hub.getPrizes(0);
 
         console.log(id);
         console.log(amount);
         console.log(winnerAmount);
         console.log(winnerAddress);
-        console.log(expiry);   
+        console.log(expiry);
     }
 }

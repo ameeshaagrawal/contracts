@@ -10,7 +10,7 @@ import "forge-std/console.sol";
 contract Hub is PlugBase {
     Token public token;
     YieldFarm public yieldFarm;
-    
+
     uint256 public totalMoons;
     uint256 public totalDeposits;
 
