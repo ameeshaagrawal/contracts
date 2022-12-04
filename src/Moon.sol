@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
+
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/contracts/access/Ownable.sol";
 import "./utils/PlugBase.sol";
 import "./Token.sol";
+
 struct Prize {
     uint256 id;
     uint256 amount;
@@ -31,17 +33,12 @@ contract Moon is PlugBase {
     bytes32 OP_CREATE_PRIZES = keccak256("OP_CREATE_PRIZES");
     bytes32 OP_APPROVED_CLAIM = keccak256("OP_APPROVED_CLAIM");
     bytes32 OP_APPROVED_WITHDRAW = keccak256("OP_APPROVED_WITHDRAW");
-    bytes32 OP_DEPOSIT_LIQUIDTY = keccak256("OP_DEPOSIT_LIQUIDTY");
     bytes32 OP_WITHDRAW_LIQUIDTY = keccak256("OP_WITHDRAW_LIQUIDTY");
     bytes32 HUB_DEPOSIT = keccak256("HUB_DEPOSIT");
     bytes32 OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
     bytes32 HUB_REQUEST_CLAIM = keccak256("HUB_REQUEST_CLAIM");
 
-    uint256 CREATE_PRIZES_GAS_LIMIT = 100000;
-    uint256 APPROVED_CLAIM_GAS_LIMIT = 100000;
-    uint256 APPROVED_WITHDRAW_GAS_LIMIT = 100000;
-    uint256 DEPOSIT_LIQUIDTY_GAS_LIMIT = 100000;
-    uint256 WITHDRAW_LIQUIDTY_GAS_LIMIT = 100000;
+    uint256 GAS_LIMIT = 100000;
 
     event FundsDeposited(address indexed sender, uint256 amount);
     event FundsAdded(uint256 amount);
@@ -62,12 +59,6 @@ contract Moon is PlugBase {
         hubChainSlug = _hubChainSlug;
         chainSlug = _chainSlug;
     }
-
-    // Function to receive Ether. msg.data must be empty
-    receive() external payable {}
-
-    // Fallback function is called when msg.data is not empty
-    fallback() external payable {}
 
     function rescueFunds(address _to, uint256 _amount) external onlyOwner {
         token.transfer(_to, _amount);
@@ -97,7 +88,7 @@ contract Moon is PlugBase {
         balances[msg.sender] += _amount;
         bytes memory _payload = abi.encode(msg.sender, _amount, chainSlug);
         bytes memory payload = abi.encode(HUB_DEPOSIT, _payload);
-        outbound(hubChainSlug, DEPOSIT_LIQUIDTY_GAS_LIMIT, fees, payload);
+        outbound(hubChainSlug, GAS_LIMIT, fees, payload);
         token.burn(address(this), _amount);
     }
 
@@ -130,7 +121,7 @@ contract Moon is PlugBase {
         require(amount > 0, "No prize money");
         bytes memory _payload = abi.encode(msg.sender, latestId, chainSlug);
         bytes memory payload = abi.encode(HUB_REQUEST_CLAIM, _payload);
-        outbound(hubChainSlug, DEPOSIT_LIQUIDTY_GAS_LIMIT, fees, payload);
+        outbound(hubChainSlug, GAS_LIMIT, fees, payload);
     }
 
     function _approvedClaim(bytes memory payload) internal {
@@ -153,12 +144,6 @@ contract Moon is PlugBase {
         token.transfer(receiver, amount);
     }
 
-    // function _depositLiquidity(bytes memory payload) internal {
-    //     (uint256 amount) = abi.decode(payload, (uint256));
-    //     token.mint(address(this), amount);
-    //     emit FundsAdded(amount);
-    // }
-
     function _withdrawLiquidity(bytes memory payload) internal {
         uint256 amount = abi.decode(payload, (uint256));
         // token.burn(address(this), amount);
@@ -179,23 +164,10 @@ contract Moon is PlugBase {
             payload_,
             (bytes32, bytes)
         );
+
         if (action == OP_CREATE_PRIZES) _createPrize(data);
         if (action == OP_APPROVED_CLAIM) _approvedClaim(data);
         if (action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
-        // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
-        if (action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
-        if (action == OP_SYNC_DEPOSIT) _syncDeposit(data);
-    }
-
-    function mockInBound(bytes memory payload_) external {
-        (bytes32 action, bytes memory data) = abi.decode(
-            payload_,
-            (bytes32, bytes)
-        );
-        if(action == OP_CREATE_PRIZES) _createPrize(data);
-        // if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
-        if (action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
-        // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
         if (action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
         if (action == OP_SYNC_DEPOSIT) _syncDeposit(data);
     }

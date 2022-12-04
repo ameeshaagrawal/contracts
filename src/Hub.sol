@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import "./utils/PlugBase.sol";
 import "./YieldFarm.sol";
 import "./Token.sol";
-
-import "forge-std/console.sol";
 
 contract Hub is PlugBase {
     Token public token;
@@ -93,8 +91,12 @@ contract Hub is PlugBase {
         );
     }
 
-    function declareWinner() external  {
-        if(prizes.length > 0)require(block.timestamp > prizes[prizes.length - 1].expiry, "Prize already active");
+    function declareWinner() external {
+        if (prizes.length > 0)
+            require(
+                block.timestamp > prizes[prizes.length - 1].expiry,
+                "Prize already active"
+            );
         uint256 interest = yieldFarm.maxWithdraw(address(this)) - totalDeposits;
         uint256 totalUsers = users.length;
 
@@ -159,6 +161,7 @@ contract Hub is PlugBase {
         bytes memory data = abi.encode(id, amount, receiver);
         bytes memory finalPayload = abi.encode(OP_APPROVED_CLAIM, data);
         outbound(moonChainId, SYNC_WINNER_GAS_LIMIT, fees, finalPayload);
+
         emit ClaimApproved(id, receiver, amount, moonChainId);
     }
 
@@ -207,12 +210,18 @@ contract Hub is PlugBase {
         _to.transfer(_amount);
     }
 
-    function setFees(uint256 _fees) external onlyOwner {
-        fees = _fees;
+    function redeem() external onlyOwner {
+        uint256 shares = yieldFarm.balanceOf(address(this));
+        yieldFarm.redeem(shares, address(this), address(this));
     }
 
-    // mocks
-    function mockInbound(bytes memory payload_) external {
-        _receiveInbound(payload_);
+    function deposit() external onlyOwner {
+        uint256 amount = token.balanceOf(address(this));
+        token.approve(address(yieldFarm), amount);
+        yieldFarm.deposit(amount, address(this));
+    }
+
+    function setFees(uint256 _fees) external onlyOwner {
+        fees = _fees;
     }
 }
