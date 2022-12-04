@@ -157,6 +157,7 @@ contract Moon is PlugBase {
         token.mint(address(this), amount);
         token.transfer(receiver, amount);
     }
+    
 
     // function _depositLiquidity(bytes memory payload) internal {
     //     (uint256 amount) = abi.decode(payload, (uint256));

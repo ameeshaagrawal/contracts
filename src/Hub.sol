@@ -22,14 +22,18 @@ contract Hub is PlugBase {
 
     bytes32 OP_HUB_DEPOSIT = keccak256("OP_HUB_DEPOSIT");
     bytes32 OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
-    bytes32 OP_HUB_DECLARE_PRIZE = keccak256("OP_HUB_DECLARE_PRIZE");
-
+    bytes32 OP_HUB_DECLARE_PRIZE = keccak256("OP_CREATE_PRIZES");
+    bytes32 HUB_REQUEST_CLAIM = keccak256("HUB_REQUEST_CLAIM");
+    bytes32 OP_APPROVED_CLAIM = keccak256("OP_APPROVED_CLAIM");
     string INTEGRATION_TYPE = "FAST";
 
     uint256 SYNC_BALANCES_GAS_LIMIT = 100000;
     uint256 SYNC_WINNER_GAS_LIMIT = 100000;
     uint256 ONE_WEEK = 1 weeks;
     uint256 public fees = 0;
+    mapping(uint256 => mapping(address => bool)) public claimed;
+
+    event ClaimApproved(uint256 indexed id, address indexed receiver, uint256 amount, uint256 moonSlug);
 
     struct Prize {
         uint256 id;
@@ -84,7 +88,7 @@ contract Hub is PlugBase {
         );
     }
 
-    function declareWinner() external onlyOwner {
+    function declareWinner() external  {
         uint256 interest = yieldFarm.maxWithdraw(address(this)) - totalDeposits;
         uint256 totalUsers = users.length;
 
@@ -115,8 +119,13 @@ contract Hub is PlugBase {
             prize.id
         );
 
-        payload = abi.encode(OP_SYNC_DEPOSIT, payload);
+        payload = abi.encode(OP_HUB_DECLARE_PRIZE, payload);
         _broadcast(type(uint256).max, SYNC_WINNER_GAS_LIMIT, payload);
+        
+        // reset claimed
+        for (uint256 i = 0; i < users.length; i++) {
+            claimed[prize.id][users[i]] = false;
+        }
     }
 
     function _receiveInbound(bytes memory payload_) internal override {
@@ -126,6 +135,29 @@ contract Hub is PlugBase {
         );
 
         if (action == OP_HUB_DEPOSIT) _deposit(data);
+        if (action == HUB_REQUEST_CLAIM) _processClaim(data);
+    }
+
+    function _processClaim(bytes memory payload) internal {
+        (address receiver, uint256 id, uint256 moonChainId) = abi.decode(payload,
+            (address, uint256, uint256)
+        );
+        if(claimed[id][receiver]) return;
+        Prize memory prize = prizes[id];
+        if(prize.expiry < block.timestamp) return;
+        if(prize.winnerAddress == receiver) {
+          bytes memory data = abi.encode(id, prize.winnerAmount ,receiver);
+          bytes memory finalPayload  = abi.encode(OP_APPROVED_CLAIM, data);
+            outbound(moonChainId, SYNC_WINNER_GAS_LIMIT, fees, finalPayload);
+             emit ClaimApproved(id, receiver, prize.winnerAmount, moonChainId);
+           
+        } else {
+         bytes memory data = abi.encode(id, prize.amount ,receiver);
+         bytes memory finalPayload  = abi.encode(OP_APPROVED_CLAIM, data);
+            outbound(moonChainId, SYNC_WINNER_GAS_LIMIT, fees, finalPayload);
+             emit ClaimApproved(id, receiver, prize.amount, moonChainId);
+        }
+        claimed[id][receiver] = true;
     }
 
     function _deposit(bytes memory payload_) internal {
