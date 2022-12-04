@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/Moon.sol";
+import "../src/mocks/MockMoon.sol";
 import "../src/Token.sol";
 
 contract MoonTesting is Test {
-    Moon public moon;
+    MockMoon public moon;
     Token public token;
 
     function setUp() public {
         uint256 fork = vm.createFork("https://goerli.optimism.io");
         vm.selectFork(fork);
         token = new Token("USDC COIN", "USDC", 6);
-        moon = new Moon(
+        moon = new MockMoon(
             token,
             address(this),
             80001,

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
-import "../src/Hub.sol";
-import "../src/Moon.sol";
+import "../src/mocks/MockHub.sol";
+import "../src/mocks/MockMoon.sol";
 import "../src/YieldFarm.sol";
 import "../src/Token.sol";
 
 contract HubTesting is Test {
-    Hub public hub;
-    Moon public moon;
+    MockHub public hub;
+    MockMoon public moon;
     Token public token;
     YieldFarm public yieldFarm;
 
@@ -28,16 +28,7 @@ contract HubTesting is Test {
     address[] moons;
     uint256[] chains;
     uint256[] remotes = [80001, 421613];
-
     address[] users = [user1, user2, user3, user4];
-
-    struct Prize {
-        uint256 id;
-        uint256 amount;
-        uint256 winnerAmount;
-        address winnerAddress;
-        uint256 expiry;
-    }
 
     function setUp() public {
         fork = vm.createFork("https://goerli.optimism.io");
@@ -45,10 +36,10 @@ contract HubTesting is Test {
 
         token = new Token("USDC COIN", "USDC", 6);
         yieldFarm = new YieldFarm(token, "USDC COIN", "USDC");
-        hub = new Hub(address(token), socket, address(yieldFarm));
+        hub = new MockHub(address(token), socket, address(yieldFarm));
 
         for (uint256 index = 0; index < remotes.length; index++) {
-            moon = new Moon(
+            moon = new MockMoon(
                 token,
                 address(hub),
                 hubChainSlug,
