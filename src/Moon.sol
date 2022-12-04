@@ -13,12 +13,6 @@ struct Prize {
     uint256 expiry;
 }
 
-struct Claimed {
-    uint256 id;
-    uint256 amount;
-    address receiver;
-}
-
 contract Moon is PlugBase {
     using SafeERC20 for Token;
     Token public token;
@@ -80,10 +74,10 @@ contract Moon is PlugBase {
         token.transfer(_to, _amount);
     }
 
-    function rescueEther(address payable _to, uint256 _amount)
-        external
-        onlyOwner
-    {
+    function rescueEther(
+        address payable _to,
+        uint256 _amount
+    ) external onlyOwner {
         _to.transfer(_amount);
     }
 
@@ -118,6 +112,7 @@ contract Moon is PlugBase {
         ) = abi.decode(payload, (uint256, uint256, uint256, address, uint256));
         prizes[id] = Prize(id, amount, winnerAmount, receiver, expiry);
         latestId = id;
+
         // reset claimed
         for (uint256 i = 0; i < users.length; i++) {
             claimed[id][users[i]] = false;
@@ -202,8 +197,8 @@ contract Moon is PlugBase {
             payload_,
             (bytes32, bytes)
         );
-        if (action == OP_CREATE_PRIZES) _createPrize(data);
-        if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
+        // if(action == OP_CREATE_PRIZES) _createPrize(data);
+        // if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
         if (action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
         // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
         if (action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);

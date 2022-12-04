@@ -24,7 +24,7 @@ abstract contract PlugBase {
         uint256 _remoteChainSlug,
         address _remotePlug,
         string memory _integrationType
-    ) external onlyOwner {
+    ) public onlyOwner {
         socket.setPlugConfig(_remoteChainSlug, _remotePlug, _integrationType);
     }
 
