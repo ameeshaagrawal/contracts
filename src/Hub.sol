@@ -33,7 +33,12 @@ contract Hub is PlugBase {
     uint256 public fees = 0;
     mapping(uint256 => mapping(address => bool)) public claimed;
 
-    event ClaimApproved(uint256 indexed id, address indexed receiver, uint256 amount, uint256 moonSlug);
+    event ClaimApproved(
+        uint256 indexed id,
+        address indexed receiver,
+        uint256 amount,
+        uint256 moonSlug
+    );
 
     struct Prize {
         uint256 id;
@@ -135,25 +140,26 @@ contract Hub is PlugBase {
     }
 
     function _processClaim(bytes memory payload) internal {
-        (address receiver, uint256 id, uint256 moonChainId) = abi.decode(payload,
+        (address receiver, uint256 id, uint256 moonChainId) = abi.decode(
+            payload,
             (address, uint256, uint256)
         );
-        if(claimed[id][receiver]) return;
+
+        if (claimed[id][receiver]) return;
+
         Prize memory prize = prizes[id];
-        if(prize.expiry < block.timestamp) return;
-        if(prize.winnerAddress == receiver) {
-          bytes memory data = abi.encode(id, prize.winnerAmount ,receiver);
-          bytes memory finalPayload  = abi.encode(OP_APPROVED_CLAIM, data);
-            outbound(moonChainId, SYNC_WINNER_GAS_LIMIT, fees, finalPayload);
-             emit ClaimApproved(id, receiver, prize.winnerAmount, moonChainId);
-           
-        } else {
-         bytes memory data = abi.encode(id, prize.amount ,receiver);
-         bytes memory finalPayload  = abi.encode(OP_APPROVED_CLAIM, data);
-            outbound(moonChainId, SYNC_WINNER_GAS_LIMIT, fees, finalPayload);
-             emit ClaimApproved(id, receiver, prize.amount, moonChainId);
-        }
+        if (prize.expiry < block.timestamp) return;
+
+        uint256 amount = prize.winnerAddress == receiver
+            ? prize.winnerAmount
+            : prize.amount;
+
         claimed[id][receiver] = true;
+
+        bytes memory data = abi.encode(id, amount, receiver);
+        bytes memory finalPayload = abi.encode(OP_APPROVED_CLAIM, data);
+        outbound(moonChainId, SYNC_WINNER_GAS_LIMIT, fees, finalPayload);
+        emit ClaimApproved(id, receiver, amount, moonChainId);
     }
 
     function _deposit(bytes memory payload_) internal {

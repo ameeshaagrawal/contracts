@@ -78,9 +78,4 @@ contract MoonTesting is Test {
         console.log("prize of normal user", moon.getPrizeMoneyAmount());
         vm.stopPrank();
     }
-
-    // function testSetNumber(uint256 x) public {
-    //     // counter.setNumber(x);
-    //     // assertEq(counter.number(), x);
-    // }
 }
