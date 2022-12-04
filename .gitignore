@@ -1,12 +1,14 @@
-# Compiler files
 cache/
 out/
-
-# Ignores development broadcast logs
-!/broadcast
-/broadcast/*/31337/
-/broadcast/**/dry-run/
-
-# Dotenv file
-.env
 node_modules/
+deployments/31337.json
+
+#Hardhat files
+cache_hardhat/
+artifacts/
+src/types
+
+#Hardhat plugin files
+typechain-types/
+
+.env
