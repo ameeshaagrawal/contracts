@@ -52,6 +52,7 @@ contract MoonTesting is Test {
         bytes memory payload = abi.encode(OP_CREATE_PRIZES, data);
         moon.mockInBound(payload);
         console.log("prize of winner", moon.getPrizeMoneyAmount());
+        moon.requestClaim();
         vm.stopPrank();
 
         vm.startPrank(0x32a80b98e33c3A0E57D635C56707208D29f970a2);
