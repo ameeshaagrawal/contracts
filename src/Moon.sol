@@ -158,8 +158,9 @@ contract Moon is PlugBase {
     }
 
     function _approvedWithdraw(bytes memory payload) internal {
-        uint256 amount = abi.decode(payload, (uint256));
-        token.transfer(msg.sender, amount);
+        (uint256 amount, address receiver) = abi.decode(payload, (uint256, address));
+        token.mint(address(this), amount);
+        token.transfer(receiver, amount);
     }
 
     // function _depositLiquidity(bytes memory payload) internal {
@@ -189,7 +190,7 @@ contract Moon is PlugBase {
             (bytes32, bytes)
         );
         if (action == OP_CREATE_PRIZES) _createPrize(data);
-        // if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
+        if(action == OP_APPROVED_CLAIM) _approvedClaim(data);
         if (action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
         // if(action == OP_DEPOSIT_LIQUIDTY) _depositLiquidity(data);
         if (action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
