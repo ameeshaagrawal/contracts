@@ -15,7 +15,6 @@ contract MoonTesting is Test {
         token = new Token("USDC COIN", "USDC", 6);
         moon = new MockMoon(
             token,
-            address(this),
             80001,
             420,
             0x05501406bCC171b543db0A2C547b7cB68D9D69E3
@@ -36,8 +35,6 @@ contract MoonTesting is Test {
             moon.balances(0x86791C7b7Ea5F77b1612eCc300dD44ba3A1C9083)
         );
         vm.stopPrank();
-        // counter.increment();
-        // assertEq(counter.number(), 1);
     }
 
     function testSyncDeposit() public {

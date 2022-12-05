@@ -28,7 +28,7 @@ contract HubTesting is Test {
     address[] moons;
     uint256[] chains;
     uint256[] remotes = [80001, 421613];
-    address[] users = [user1, user2, user3, user4];
+    address[] users = [user1, user2]; //, user3, user4];
 
     function setUp() public {
         fork = vm.createFork("https://goerli.optimism.io");
@@ -41,7 +41,6 @@ contract HubTesting is Test {
         for (uint256 index = 0; index < remotes.length; index++) {
             moon = new MockMoon(
                 token,
-                address(hub),
                 hubChainSlug,
                 chainSlug,
                 socket

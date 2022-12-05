@@ -18,17 +18,17 @@ contract Hub is PlugBase {
     mapping(address => uint256) public balances;
     mapping(uint256 => uint256) public moonBalances;
 
-    bytes32 HUB_DEPOSIT = keccak256("HUB_DEPOSIT");
-    bytes32 OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
-    bytes32 OP_CREATE_PRIZES = keccak256("OP_CREATE_PRIZES");
-    bytes32 HUB_REQUEST_CLAIM = keccak256("HUB_REQUEST_CLAIM");
-    bytes32 OP_APPROVED_CLAIM = keccak256("OP_APPROVED_CLAIM");
-    string INTEGRATION_TYPE = "FAST";
+    bytes32 public HUB_DEPOSIT = keccak256("HUB_DEPOSIT");
+    bytes32 public OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
+    bytes32 public OP_CREATE_PRIZES = keccak256("OP_CREATE_PRIZES");
+    bytes32 public HUB_REQUEST_CLAIM = keccak256("HUB_REQUEST_CLAIM");
+    bytes32 public OP_APPROVED_CLAIM = keccak256("OP_APPROVED_CLAIM");
+    string public INTEGRATION_TYPE = "FAST";
 
-    uint256 SYNC_BALANCES_GAS_LIMIT = 100000;
-    uint256 SYNC_WINNER_GAS_LIMIT = 100000;
-    uint256 ONE_WEEK = 1 weeks;
+    uint256 public GAS_LIMIT = 1000000;
+    uint256 public claimPeriod = 300;
     uint256 public fees = 0;
+
     mapping(uint256 => mapping(address => bool)) public claimed;
 
     event ClaimApproved(
@@ -113,7 +113,7 @@ contract Hub is PlugBase {
         Prize memory prize;
 
         prize.amount = amount;
-        prize.expiry = block.timestamp + ONE_WEEK;
+        prize.expiry = block.timestamp + claimPeriod;
         prize.id = prizes.length == 0 ? 1 : prizes.length;
         prize.winnerAddress = users[randomIndex];
         prize.winnerAmount = winnerAmount;
@@ -128,7 +128,7 @@ contract Hub is PlugBase {
         );
 
         payload = abi.encode(OP_CREATE_PRIZES, payload);
-        _broadcast(type(uint256).max, SYNC_WINNER_GAS_LIMIT, payload);
+        _broadcast(type(uint256).max, GAS_LIMIT, payload);
     }
 
     function _receiveInbound(bytes memory payload_) internal override {
@@ -160,7 +160,7 @@ contract Hub is PlugBase {
 
         bytes memory data = abi.encode(id, amount, receiver);
         bytes memory finalPayload = abi.encode(OP_APPROVED_CLAIM, data);
-        outbound(moonChainId, SYNC_WINNER_GAS_LIMIT, fees, finalPayload);
+        outbound(moonChainId, GAS_LIMIT, fees, finalPayload);
 
         emit ClaimApproved(id, receiver, amount, moonChainId);
     }
@@ -179,7 +179,7 @@ contract Hub is PlugBase {
         bytes memory payload = abi.encode(user, balances[user]);
         payload = abi.encode(OP_SYNC_DEPOSIT, payload);
 
-        _broadcast(moonChainId, SYNC_BALANCES_GAS_LIMIT, payload);
+        _broadcast(moonChainId, GAS_LIMIT, payload);
 
         token.mint(address(this), amount);
         token.approve(address(yieldFarm), amount);
@@ -223,5 +223,13 @@ contract Hub is PlugBase {
 
     function setFees(uint256 _fees) external onlyOwner {
         fees = _fees;
+    }
+
+    function setClaimPeriod(uint256 _claimPeriod) external onlyOwner {
+        claimPeriod = _claimPeriod;
+    }
+
+    function setGasLimit(uint256 _limit) external onlyOwner {
+        GAS_LIMIT = _limit;
     }
 }

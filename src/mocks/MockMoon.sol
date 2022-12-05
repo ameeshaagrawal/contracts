@@ -6,11 +6,10 @@ import "../Moon.sol";
 contract MockMoon is Moon {
     constructor(
         Token _token,
-        address _hub,
         uint256 _hubChainSlug,
         uint256 _chainSlug,
         address _socket
-    ) Moon(_token, _hub, _hubChainSlug, _chainSlug, _socket) {}
+    ) Moon(_token, _hubChainSlug, _chainSlug, _socket) {}
 
     function mockInBound(bytes memory payload_) external {
         (bytes32 action, bytes memory data) = abi.decode(

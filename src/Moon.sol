@@ -18,7 +18,6 @@ struct Prize {
 contract Moon is PlugBase {
     using SafeERC20 for Token;
     Token public token;
-    address public hub;
     uint256 public hubChainSlug;
     uint256 public chainSlug;
 
@@ -30,15 +29,15 @@ contract Moon is PlugBase {
 
     uint256 public latestId;
 
-    bytes32 OP_CREATE_PRIZES = keccak256("OP_CREATE_PRIZES");
-    bytes32 OP_APPROVED_CLAIM = keccak256("OP_APPROVED_CLAIM");
-    bytes32 OP_APPROVED_WITHDRAW = keccak256("OP_APPROVED_WITHDRAW");
-    bytes32 OP_WITHDRAW_LIQUIDTY = keccak256("OP_WITHDRAW_LIQUIDTY");
-    bytes32 HUB_DEPOSIT = keccak256("HUB_DEPOSIT");
-    bytes32 OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
-    bytes32 HUB_REQUEST_CLAIM = keccak256("HUB_REQUEST_CLAIM");
+    bytes32 public OP_CREATE_PRIZES = keccak256("OP_CREATE_PRIZES");
+    bytes32 public OP_APPROVED_CLAIM = keccak256("OP_APPROVED_CLAIM");
+    bytes32 public OP_APPROVED_WITHDRAW = keccak256("OP_APPROVED_WITHDRAW");
+    bytes32 public OP_WITHDRAW_LIQUIDTY = keccak256("OP_WITHDRAW_LIQUIDTY");
+    bytes32 public HUB_DEPOSIT = keccak256("HUB_DEPOSIT");
+    bytes32 public OP_SYNC_DEPOSIT = keccak256("OP_SYNC_DEPOSIT");
+    bytes32 public HUB_REQUEST_CLAIM = keccak256("HUB_REQUEST_CLAIM");
 
-    uint256 GAS_LIMIT = 100000;
+    uint256 public GAS_LIMIT = 1000000;
 
     event FundsDeposited(address indexed sender, uint256 amount);
     event FundsAdded(uint256 amount);
@@ -49,13 +48,11 @@ contract Moon is PlugBase {
 
     constructor(
         Token _token,
-        address _hub,
         uint256 _hubChainSlug,
         uint256 _chainSlug,
         address _socket
     ) PlugBase(_socket) {
         token = _token;
-        hub = _hub;
         hubChainSlug = _hubChainSlug;
         chainSlug = _chainSlug;
     }
@@ -75,8 +72,8 @@ contract Moon is PlugBase {
         fees = _fees;
     }
 
-    function setHub(address _hub) external onlyOwner {
-        hub = _hub;
+    function setGasLimit(uint256 _limit) external onlyOwner {
+        GAS_LIMIT = _limit;
     }
 
     function setHubChainSlug(uint256 _hubChainSlug) external onlyOwner {
@@ -100,12 +97,12 @@ contract Moon is PlugBase {
             address receiver,
             uint256 id
         ) = abi.decode(payload, (uint256, uint256, uint256, address, uint256));
+
         prizes[id] = Prize(id, amount, winnerAmount, receiver, expiry);
         latestId = id;
     }
 
     function getPrizeMoneyAmount() public view returns (uint256) {
-        require(latestId > 0, "No prize money");
         uint256 amount = prizes[latestId].amount;
         uint256 winnerAmount = prizes[latestId].winnerAmount;
         uint256 expiry = prizes[latestId].expiry;
@@ -170,5 +167,28 @@ contract Moon is PlugBase {
         if (action == OP_APPROVED_WITHDRAW) _approvedWithdraw(data);
         if (action == OP_WITHDRAW_LIQUIDTY) _withdrawLiquidity(data);
         if (action == OP_SYNC_DEPOSIT) _syncDeposit(data);
+    }
+
+    function getPrizes(
+        uint256 index
+    )
+        external
+        view
+        returns (
+            uint256 id,
+            uint256 amount,
+            uint256 winnerAmount,
+            address winnerAddress,
+            uint256 expiry
+        )
+    {
+        Prize memory prize = prizes[index];
+        return (
+            prize.id,
+            prize.amount,
+            prize.winnerAmount,
+            prize.winnerAddress,
+            prize.expiry
+        );
     }
 }
